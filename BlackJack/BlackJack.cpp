@@ -33,17 +33,6 @@ bool dealerCardIsExist[7] = { true, true, true, true, true, true, true }; //카�
 bool initCard[4] = { true, true, true, true }; //초기 카드 판별을 위한 변수
 
 /* 블랙잭 룰 - 시작하면 카드를 2장 뽑는다.랜덤으로 하나씩 뽑힌다.
-* 
-* 카드 더미에서 먼저 딜러가 카드를 나누어준다. -> 어떤 방식으로 할것인가? 애니메이션을 넣을것인가? o
-* ㄴ 시작 버튼을 누르면.... 카드 더미가 나온다. 카드 더미에서 카드를 빼서 두 장을 가져간다.
-* 애니메이팅 함수를 만든다. 그리고 여기서 랜덤함수 발동, 카드를 뽑는다.
-* ㄴ 랜덤이 문제네. 52장중에서 하나씩 중복없게 뽑아야함. 간소화 가능할거같은데..... 
-* ㄴ 0~51까지 있는 배열1을 만들어줌. 그리고 배열2를 만듦.
-* 뽑은 카드의 갯수에 해당하는 변수를 만들어준다.
-* 카드를 뽑을떄마다 갯수를 늘린다.
-* 
-* 
-* 
 *
 그리고 딜러에게 2장의 카드가 가고, 한 장은 보이지 않는다.(1장만 공개) -> 여기까지 완료....
 
@@ -52,6 +41,11 @@ bool initCard[4] = { true, true, true, true }; //초기 카드 판별을 위한 
 * 딜러의 카드의 합이 17 이상이면 딜러는 카드를 덜 받아야 한다.
 * 전체 52가지의 카드가 있는데......
 * 
+* 이제 카드뽑는거.... 히트, 스탠드 버튼 만들고... 딜러는 점수 16 미만일시 한장 더 뽑게시킴.
+* 이제 딜러보다 점수가 작거나, 점수가 21을 넘겼거나 하면 패배.
+* 딜러가 버스트하거나, 점수가 더 작거나 하면 승리.
+* 블랙잭의 경우 1.5배를 받는다. (스코어 정확히 21일 경우)
+* 그렇게 해서... 초기자금으로 주어진 토큰을 일정 이상으로 불리면 게임에서 승리한다.
 */
 
 //오브젝트 배치용 함수 선언(show여부는 제외함)
@@ -130,7 +124,7 @@ void cardRandom() {
 //타이머콜백
 void TimercallBack(TimerID timer) {
 
-    if (timer == moveYT) { //이건 좌표 조금씩옴기는 타이머
+    if (timer == moveYT) { //이건 좌표 조금씩옮기는 타이머
         movingC_y -= 10;
         locateObject(movingC, gamemain, 847, movingC_y); //재위치
 
@@ -160,7 +154,6 @@ void mouseCallack1(ObjectID obj, int x, int y, MouseAction act) {
         if (obj == initC[i]) {
 
             int S = (CardUsed[i] % 13) + 1;
-
             hideObject(initC[i]); //카드는 숨기고
 
             //플레이어의 덱으로 카드를 옮긴다.
@@ -169,41 +162,46 @@ void mouseCallack1(ObjectID obj, int x, int y, MouseAction act) {
                 playerCardIsExist[0] = false;
                 initCard[i] = false;
                 if (S <= 10) PlayerScore += S;
-                else PlayerScore += 
+                else PlayerScore += 10; //잭, 킹, 퀸의 경우...
 
                 break;
             }
             else { //1번 채우기
                 setObjectImage(playerC[1], imageinit[i]);
                 playerCardIsExist[1] = false;
-                initCard[i] = false;
+                initCard[i] = false; 
+                if (S <= 10) PlayerScore += S;
+                else PlayerScore += 10; //잭, 킹, 퀸의 경우...
 
                 for (int k = 0; k < 4; k++) { //1번까지 고르고 나면 딜러가 남은 카드를 가져감
+
+                    int O = (CardUsed[k] % 13) + 1;
 
                     if (initCard[k]) { //참이면 해당 카드는 딜러에게 가게 됨.
                         hideObject(initC[k]); //남은카드 숨기기
                         
                         if (dealerCardIsExist[0]) {
-                            setObjectImage(DealerC[0], "images/back.png"); //카드 하나는 공개
+                            setObjectImage(DealerC[0], "images/back.png"); //카드 하나는 비공개
                             dealerCardIsExist[0] = false;
+                            if (O <= 10) DealerScore += O;
+                            else DealerScore += 10; //잭, 킹, 퀸의 경우...
                         }
                         else {
-                            setObjectImage(DealerC[1], imageinit[k]); //카드 하나는 비공개
-                            dealerCardIsExist[1] = false;
+                            setObjectImage(DealerC[1], imageinit[k]); //카드 하나는 공개
+                            dealerCardIsExist[1] = false; 
+                            if (O <= 10) DealerScore += O;
+                            else DealerScore += 10; //잭, 킹, 퀸의 경우...
                             break;
                         }
                     }
                 }
 
+                printf("%d, %d", PlayerScore, DealerScore);
                 break;
             }
         }
     }
-
-
 }
-
-
 
 int main()
 {
